@@ -1,0 +1,10 @@
+
+*.cmd
+*.ko
+*.o
+*.mod*
+*.so
+src/modules.order
+src/Module.symvers
+src/Makefile
+.vscode/
