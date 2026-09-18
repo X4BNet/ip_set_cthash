@@ -5,6 +5,7 @@
 #define _IP_SET_HASH_GEN_H
 
 #include <linux/rcupdate.h>
+#include <linux/version.h>
 #include <linux/jhash.h>
 #include <linux/types.h>
 #include <linux/netfilter/nfnetlink.h>
@@ -1285,7 +1286,12 @@ mtype_head(struct ip_set *set, struct sk_buff *skb)
 	rcu_read_lock_bh();
 	t = rcu_dereference_bh(h->table);
 	mtype_ext_size(set, &elements, &ext_size);
-	memsize = mtype_ahash_memsize(h, t) + ext_size + set->ext_size;
+	memsize = mtype_ahash_memsize(h, t) + ext_size +
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
+	      atomic64_read(&set->ext_size);
+#else
+	      set->ext_size;
+#endif
 	htable_bits = t->htable_bits;
 	rcu_read_unlock_bh();
 
@@ -1366,7 +1372,11 @@ mtype_list(const struct ip_set *set,
 	rcu_read_lock();
 	for (; cb->args[IPSET_CB_ARG0] < jhash_size(t->htable_bits);
 	     cb->args[IPSET_CB_ARG0]++) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
+		cond_resched();
+#else
 		cond_resched_rcu();
+#endif
 		incomplete = skb_tail_pointer(skb);
 		n = rcu_dereference(hbucket(t, cb->args[IPSET_CB_ARG0]));
 		pr_debug("cb->arg bucket: %lu, t %p n %p\n",
