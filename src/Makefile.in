@@ -43,9 +43,9 @@ clean: mclean lclean
 
 dinstall:
 	@echo " *"
-	@./install-dkms.sh --install
+	@KVERSION="$(KVERSION)" ./install-dkms.sh --install
 
-install: minstall
+install: dinstall
 
 uninstall:
 	@if [ "@DKMSINSTALL@" = dinstall ]; then ./install-dkms.sh --uninstall; fi

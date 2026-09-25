@@ -284,7 +284,7 @@ do
     --kver=*)  KVERSION="$ac_optarg" ;;
     --kdir=*)      KDIR="$ac_optarg" ;;
     --disable-dkms*)     SKIPDKMS=1 ;;
-    --from-dkms-conf) ;;
+    --from-dkms-conf*) ;;
     --make) echo called from make; CARGS=`echo $CARGS | sed s/--make//g` ;;
     -Werror) KOPTS="$KOPTS -Werror" ;;
     --help|-h) show_help ;;
@@ -489,4 +489,3 @@ echo
 echo "  If you need some options enabled run ./configure --help"
 echo "  Now run: make all install"
 echo
-
