@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+command=$1
+shift
+printf '%s %s\n' "$command" "$*" >> "$MOCK_DKMS_LOG"
+
+case "$command" in
+    status)
+        if [[ -f "$MOCK_DKMS_STATE/registered" ]]; then
+            for kernel_file in "$MOCK_DKMS_STATE"/kernels/*; do
+                [[ -e "$kernel_file" ]] || continue
+                printf '%s/%s, %s, x86_64: installed\n' \
+                    "$MOCK_MODULE_NAME" "$MOCK_MODULE_VERSION" "${kernel_file##*/}"
+            done
+        fi
+        ;;
+    remove)
+        if [[ "${2:-}" == --all ]]; then
+            rm -rf "$MOCK_DKMS_STATE/kernels"
+            rm -f "$MOCK_DKMS_STATE/registered"
+        else
+            [[ "${2:-}" == -k ]]
+            test -f "$MOCK_SOURCE_DIR/old-source"
+            rm -f "$MOCK_DKMS_STATE/kernels/$3"
+            if ! compgen -G "$MOCK_DKMS_STATE/kernels/*" >/dev/null; then
+                rm -f "$MOCK_DKMS_STATE/registered"
+            fi
+        fi
+        ;;
+    add)
+        touch "$MOCK_DKMS_STATE/registered"
+        ;;
+    build)
+        test -f "$MOCK_DKMS_STATE/registered"
+        test -f "$MOCK_SOURCE_DIR/Makefile.in"
+        ;;
+    install)
+        test -f "$MOCK_DKMS_STATE/registered"
+        [[ "${2:-}" == -k ]]
+        mkdir -p "$MOCK_DKMS_STATE/kernels"
+        touch "$MOCK_DKMS_STATE/kernels/$3"
+        ;;
+    *)
+        echo "unexpected dkms command: $command $*" >&2
+        exit 2
+        ;;
+esac

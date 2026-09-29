@@ -17,7 +17,8 @@ command -v dkms >/dev/null 2>&1 || {
 }
 
 module_version=$(./version.sh)
-source_dir="/usr/src/$module_name-$module_version"
+source_root=${DKMS_SOURCE_ROOT:-/usr/src}
+source_dir="$source_root/$module_name-$module_version"
 
 if [[ "$action" == --uninstall ]]; then
     dkms remove "$module_name/$module_version" --all || true
@@ -30,13 +31,13 @@ target_kernel=${KVERSION:?KVERSION must identify the target kernel}
 while IFS= read -r old_version; do
     [[ -z "$old_version" || "$old_version" == "$module_version" ]] && continue
     dkms remove "$module_name/$old_version" --all
-    rm -rf "/usr/src/$module_name-$old_version"
+    rm -rf "$source_root/$module_name-$old_version"
 done < <(dkms status "$module_name" 2>/dev/null | sed -n "s#^$module_name/\\([^,:]*\\).*#\\1#p")
 
-registered=false
-if dkms status "$module_name/$module_version" 2>/dev/null | grep -q "^$module_name/"; then
-    registered=true
-fi
+# Remove the target build while the registered source tree still exists.
+# Removing it after replacing /usr/src can make DKMS unregister the complete
+# module version when this is its last installed kernel.
+dkms remove "$module_name/$module_version" -k "$target_kernel" >/dev/null 2>&1 || true
 
 rm -rf "$source_dir"
 install -d "$source_dir"
@@ -44,9 +45,8 @@ cp -p ./*.[ch] Makefile.in configure dkms.conf install-dkms.sh version.sh "$sour
 chmod 0755 "$source_dir/configure" "$source_dir/install-dkms.sh" "$source_dir/version.sh"
 printf '%s\n' "$module_version" > "$source_dir/.module-version"
 
-if [[ "$registered" == false ]]; then
+if ! dkms status "$module_name/$module_version" 2>/dev/null | grep -q "^$module_name/"; then
     dkms add "$module_name/$module_version"
 fi
-dkms remove "$module_name/$module_version" -k "$target_kernel" >/dev/null 2>&1 || true
 dkms build "$module_name/$module_version" -k "$target_kernel"
 dkms install "$module_name/$module_version" -k "$target_kernel"
