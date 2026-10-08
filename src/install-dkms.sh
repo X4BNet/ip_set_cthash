@@ -32,7 +32,8 @@ while IFS= read -r old_version; do
     [[ -z "$old_version" || "$old_version" == "$module_version" ]] && continue
     dkms remove "$module_name/$old_version" --all
     rm -rf "$source_root/$module_name-$old_version"
-done < <(dkms status "$module_name" 2>/dev/null | sed -n "s#^$module_name/\\([^,:]*\\).*#\\1#p")
+done < <(dkms status "$module_name" 2>/dev/null |
+	sed -n "s#^$module_name/\\([^,:]*\\).*#\\1#p" | sort -u)
 
 # Remove the target build while the registered source tree still exists.
 # Removing it after replacing /usr/src can make DKMS unregister the complete
@@ -45,7 +46,9 @@ cp -p ./*.[ch] Makefile.in configure dkms.conf install-dkms.sh version.sh "$sour
 chmod 0755 "$source_dir/configure" "$source_dir/install-dkms.sh" "$source_dir/version.sh"
 printf '%s\n' "$module_version" > "$source_dir/.module-version"
 
-if ! dkms status "$module_name/$module_version" 2>/dev/null | grep -q "^$module_name/"; then
+# grep -q can make dkms receive SIGPIPE when more than one kernel is listed;
+# pipefail would then misclassify the registered version as absent.
+if ! dkms status "$module_name/$module_version" 2>/dev/null | grep "^$module_name/" >/dev/null; then
     dkms add "$module_name/$module_version"
 fi
 dkms build "$module_name/$module_version" -k "$target_kernel"

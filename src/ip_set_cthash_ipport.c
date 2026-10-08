@@ -9,6 +9,7 @@
 #include <linux/skbuff.h>
 #include <linux/errno.h>
 #include <linux/random.h>
+#include <linux/version.h>
 #include <net/ip.h>
 #include <net/ipv6.h>
 #include <net/netlink.h>
@@ -83,7 +84,11 @@ hash_ipport4_data_next(struct hash_ipport4_elem *next,
 
 #define MTYPE		hash_ipport4
 #define HOST_MASK	32
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
 #include "ip_set_hash_gen.h"
+#else
+#include "ip_set_hash_gen_legacy.h"
+#endif
 
 static int
 hash_ipport4_kadt(struct ip_set *set, const struct sk_buff *skb,
@@ -252,7 +257,11 @@ hash_ipport6_data_next(struct hash_ipport6_elem *next,
 #define MTYPE		hash_ipport6
 #define HOST_MASK	128
 #define IP_SET_EMIT_CREATE
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
 #include "ip_set_hash_gen.h"
+#else
+#include "ip_set_hash_gen_legacy.h"
+#endif
 
 static int
 hash_ipport6_kadt(struct ip_set *set, const struct sk_buff *skb,

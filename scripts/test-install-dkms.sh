@@ -39,6 +39,7 @@ run_case() {
     test -f "$state_dir/registered"
     test -f "$state_dir/kernels/$target_kernel"
     test -f "$source_dir/Makefile.in"
+    test -f "$source_dir/ip_set_hash_gen_legacy.h"
     test ! -e "$source_dir/old-source"
     grep -Fqx "remove $module_name/$module_version -k $target_kernel" "$log_file"
     grep -Fqx "build $module_name/$module_version -k $target_kernel" "$log_file"
