@@ -1,0 +1,13 @@
+- hosts: filtering
+  become: yes
+  tasks:
+    - name: exercise cthash set lifecycle and module unload
+      shell: |
+        set -euo pipefail
+        ipset create qemu-cthash cthash:ip,port family inet
+        ipset list qemu-cthash | grep -F 'Type: cthash:ip,port'
+        ipset destroy qemu-cthash
+        modprobe -r ip_set_cthash_ipport
+        modprobe ip_set_cthash_ipport
+      args:
+        executable: /bin/bash
