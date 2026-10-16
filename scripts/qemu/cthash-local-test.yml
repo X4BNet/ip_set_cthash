@@ -4,9 +4,12 @@
     - name: exercise cthash set lifecycle and module unload
       shell: |
         set -euo pipefail
-        ipset create qemu-cthash cthash:ip,port family inet
-        ipset list qemu-cthash | grep -F 'Type: cthash:ip,port'
-        ipset destroy qemu-cthash
+        /usr/local/sbin/ipset create qemu-cthash cthash:ip,port family inet
+        /usr/local/sbin/ipset add qemu-cthash 192.0.2.10,tcp:443
+        /usr/local/sbin/ipset test qemu-cthash 192.0.2.10,tcp:443
+        /usr/local/sbin/ipset save qemu-cthash | grep -F 'create qemu-cthash cthash:ip,port'
+        /usr/local/sbin/ipset destroy qemu-cthash
+        python3 /tmp/ip-set-cthash-local-build/scripts/qemu/cthash-netlink-smoke.py
         modprobe -r ip_set_cthash_ipport
         modprobe ip_set_cthash_ipport
       args:

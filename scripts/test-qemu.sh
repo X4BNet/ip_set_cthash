@@ -15,4 +15,5 @@ export KMOD_CI_MODULE_NAME="ip-set-cthash"
 export KMOD_CI_ENV_NAME="cthash-local"
 export KMOD_CI_REPO_ROOT="$repo_root"
 export KMOD_CI_HOST_BUILD_COMMAND="./scripts/test-install-dkms.sh"
+export KMOD_CI_SKIP_RTS=1
 exec "$shared_root/scripts/test-qemu.sh" "$@"

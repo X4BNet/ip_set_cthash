@@ -2,12 +2,42 @@
   become: yes
   vars:
     module_dir: /tmp/ip-set-cthash-local-build
+    ipset_dir: /tmp/x4b-ipset-build
   tasks:
     - name: install build and test dependencies
       apt:
-        name: [build-essential, dkms, ipset]
+        name:
+          - autoconf
+          - automake
+          - build-essential
+          - dkms
+          - git
+          - libltdl-dev
+          - libmnl-dev
+          - libtool
+          - pkgconf
         state: present
         update_cache: yes
+    - name: replace X4B ipset build directory
+      file:
+        path: "{{ ipset_dir }}"
+        state: absent
+    - name: fetch maintained X4B ipset userspace
+      git:
+        repo: https://github.com/splitice/ipset.git
+        dest: "{{ ipset_dir }}"
+        version: b7f5c36dbe3c0c7a68ae44aaeaaddd4da3c7cef9
+    - name: build and install X4B ipset userspace
+      shell: |
+        set -euo pipefail
+        autoreconf -i --force
+        ./configure
+        make -j"$(nproc)"
+        make install
+        ldconfig
+      args:
+        executable: /bin/bash
+        chdir: "{{ ipset_dir }}"
     - name: replace guest build directory
       file:
         path: "{{ module_dir }}"
